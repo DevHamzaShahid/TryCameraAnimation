@@ -61,22 +61,28 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
 
   const startCompass = () => {
     if (subscriptionRef.current) {
+      console.log('useCompassHeading - Compass already started');
       return; // Already started
     }
 
+    console.log('useCompassHeading - Starting compass...');
     try {
       setError(null);
       setIsActive(true);
       
-      subscriptionRef.current = CompassHeading.start(2, (headingData: any) => {
+      subscriptionRef.current = CompassHeading.start(1, (headingData: any) => {
         try {
           const { heading: rawHeading, accuracy: rawAccuracy } = headingData;
           
           // Smooth the heading to prevent jittery animations
           const smoothedHeading = smoothHeading(rawHeading);
           
+          // Debug logging
+          console.log('useCompassHeading - Raw data:', { rawHeading, smoothedHeading, lastHeading: lastHeadingRef.current });
+          
           // Only update if there's a significant change to prevent excessive updates
           if (Math.abs(angleDifference(lastHeadingRef.current, smoothedHeading)) > 0.5) {
+            console.log('useCompassHeading - Updating heading:', smoothedHeading);
             throttledSetHeading(smoothedHeading);
           }
           setAccuracy(rawAccuracy || 0);

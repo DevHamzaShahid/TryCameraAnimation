@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid, Platform, Alert } from 'react-native';
 import { calculateBearing } from '../utils/locationUtils';
+import { useCompassHeading } from './useCompassHeading';
 
 interface LocationState {
   latitude: number;
   longitude: number;
   heading: number;
+  compassHeading?: number; // Device compass heading
   accuracy: number;
   timestamp: number;
 }
@@ -25,6 +27,15 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
   const [error, setError] = useState<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const previousLocationRef = useRef<LocationState | null>(null);
+  
+  // Use compass heading for more accurate orientation
+  const { 
+    heading: compassHeading, 
+    isActive: compassActive, 
+    startCompass, 
+    stopCompass,
+    error: compassError 
+  } = useCompassHeading();
 
   const requestLocationPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
@@ -64,6 +75,9 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
     setError(null);
     setIsTracking(true);
 
+    // Start compass for better orientation
+    startCompass();
+
     // Get initial position
     Geolocation.getCurrentPosition(
       position => {
@@ -71,6 +85,7 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           heading: position.coords.heading || 0,
+          compassHeading: compassActive ? compassHeading : undefined,
           accuracy: position.coords.accuracy,
           timestamp: position.timestamp,
         };
@@ -96,6 +111,7 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           heading: position.coords.heading || 0,
+          compassHeading: compassActive ? compassHeading : undefined,
           accuracy: position.coords.accuracy,
           timestamp: position.timestamp,
         };
@@ -136,6 +152,7 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
       Geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+    stopCompass();
     setIsTracking(false);
   };
 

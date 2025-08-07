@@ -13,6 +13,7 @@ import {
   WaypointMarker,
   UserLocationMarker,
 } from '../components/WaypointMarkers';
+import { EnhancedUserLocationMarker } from '../components/EnhancedUserLocationMarker';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useNavigationCamera } from '../hooks/useNavigationCamera';
 import { useWaypointNavigation } from '../hooks/useWaypointNavigation';
@@ -96,16 +97,20 @@ const NavigationMapScreen: React.FC = () => {
         longitude: location.longitude,
       });
 
-      // Calculate bearing for compass
-      if (location.heading) {
-        setCompassBearing(location.heading);
+      // Calculate bearing for compass - prefer compass heading over GPS heading
+      const effectiveHeading = location.compassHeading !== undefined 
+        ? location.compassHeading 
+        : location.heading;
+      
+      if (effectiveHeading !== undefined) {
+        setCompassBearing(effectiveHeading);
       }
 
       // Follow location if navigating
       if (navigationState.isNavigating) {
         followLocation(
           { latitude: location.latitude, longitude: location.longitude },
-          location.heading,
+          effectiveHeading,
         );
       }
     }
@@ -118,18 +123,25 @@ const NavigationMapScreen: React.FC = () => {
 
   // Auto-rotate camera to north after turns
   useEffect(() => {
-    if (navigationState.isNavigating && location?.heading !== undefined) {
-      const headingChange = Math.abs(location.heading - compassBearing);
+    if (navigationState.isNavigating && location) {
+      const effectiveHeading = location.compassHeading !== undefined 
+        ? location.compassHeading 
+        : location.heading;
+        
+      if (effectiveHeading !== undefined) {
+        const headingChange = Math.abs(effectiveHeading - compassBearing);
 
-      // If significant turn detected, rotate to north after a delay
-      if (headingChange > 30) {
-        setTimeout(() => {
-          rotateToNorth(true);
-        }, 2000);
+        // If significant turn detected, rotate to north after a delay
+        if (headingChange > 30) {
+          setTimeout(() => {
+            rotateToNorth(true);
+          }, 2000);
+        }
       }
     }
   }, [
     location?.heading,
+    location?.compassHeading,
     navigationState.isNavigating,
     rotateToNorth,
     compassBearing,
@@ -239,15 +251,19 @@ const NavigationMapScreen: React.FC = () => {
           zoomEnabled={true}
           scrollEnabled={true}
         >
-          {/* User location marker */}
+          {/* Enhanced User location marker with FOV cone */}
           {location && (
-            <UserLocationMarker
+            <EnhancedUserLocationMarker
               coordinate={{
                 latitude: location.latitude,
                 longitude: location.longitude,
               }}
               heading={location.heading}
+              compassHeading={location.compassHeading}
               isNavigating={navigationState.isNavigating}
+              showFOVCone={true}
+              fovAngle={60}
+              accuracy={location.accuracy}
             />
           )}
 
@@ -350,7 +366,10 @@ const NavigationMapScreen: React.FC = () => {
           {location && (
             <Text style={styles.locationText}>
               📊 Accuracy: {location.accuracy.toFixed(0)}m | 🧭 Bearing:{' '}
-              {location.heading.toFixed(0)}°
+              {(location.compassHeading !== undefined 
+                ? location.compassHeading 
+                : location.heading).toFixed(0)}°
+              {location.compassHeading !== undefined && ' (Compass)'}
             </Text>
           )}
 

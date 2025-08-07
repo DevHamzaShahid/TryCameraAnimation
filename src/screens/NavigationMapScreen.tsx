@@ -17,9 +17,11 @@ import { EnhancedUserLocationMarker } from '../components/EnhancedUserLocationMa
 import { CombinedCompassDebugger } from '../components/CombinedCompassDebugger';
 import { CompassTestComponent } from '../components/CompassTestComponent';
 import { SimpleCompassTest } from '../components/SimpleCompassTest';
+import { CompassControlPanel } from '../components/CompassControlPanel';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useNavigationCamera } from '../hooks/useNavigationCamera';
 import { useWaypointNavigation } from '../hooks/useWaypointNavigation';
+import { useCompassHeading } from '../hooks/useCompassHeading';
 import {
   navigationWaypoints,
   NAVIGATION_SETTINGS,
@@ -41,6 +43,9 @@ const NavigationMapScreen: React.FC = () => {
     startTracking, 
     stopTracking
   } = useLocationTracking();
+
+  // Compass heading
+  const { heading: compassHeading, isActive: compassActive } = useCompassHeading();
 
   // Camera management
   const {
@@ -97,6 +102,14 @@ const NavigationMapScreen: React.FC = () => {
     };
   }, []);
 
+  // Update compass bearing when compass heading changes
+  useEffect(() => {
+    if (compassActive && compassHeading !== undefined) {
+      setCompassBearing(compassHeading);
+      console.log('NavigationMapScreen - Compass bearing updated:', compassHeading);
+    }
+  }, [compassHeading, compassActive]);
+
   // Update navigation when location changes
   useEffect(() => {
     if (location) {
@@ -106,20 +119,17 @@ const NavigationMapScreen: React.FC = () => {
       });
 
       // Calculate bearing for compass - prefer compass heading over GPS heading
-      const effectiveHeading = location.compassHeading !== undefined 
-        ? location.compassHeading 
+      const effectiveHeading = compassActive && compassHeading !== undefined
+        ? compassHeading 
         : location.heading;
       
       // Debug logging
       console.log('NavigationMapScreen - Location update:', {
         gpsHeading: location.heading,
-        compassHeading: location.compassHeading,
+        compassHeading: compassHeading,
+        compassActive: compassActive,
         effectiveHeading: effectiveHeading
       });
-      
-      if (effectiveHeading !== undefined) {
-        setCompassBearing(effectiveHeading);
-      }
 
       // Follow location if navigating
       if (navigationState.isNavigating) {
@@ -134,13 +144,15 @@ const NavigationMapScreen: React.FC = () => {
     navigationState.isNavigating,
     updateUserLocation,
     followLocation,
+    compassHeading,
+    compassActive,
   ]);
 
   // Auto-rotate camera to north after turns
   useEffect(() => {
     if (navigationState.isNavigating && location) {
-      const effectiveHeading = location.compassHeading !== undefined 
-        ? location.compassHeading 
+      const effectiveHeading = compassActive && compassHeading !== undefined
+        ? compassHeading 
         : location.heading;
         
       if (effectiveHeading !== undefined) {
@@ -156,10 +168,11 @@ const NavigationMapScreen: React.FC = () => {
     }
   }, [
     location?.heading,
-    location?.compassHeading,
+    compassHeading,
     navigationState.isNavigating,
     rotateToNorth,
     compassBearing,
+    compassActive,
   ]);
 
   // Handle waypoint marker press
@@ -272,7 +285,7 @@ const NavigationMapScreen: React.FC = () => {
                 longitude: location.longitude,
               }}
               heading={location.heading}
-              compassHeading={location.compassHeading}
+              compassHeading={compassActive ? compassHeading : undefined}
               isNavigating={navigationState.isNavigating}
               showFOVCone={true}
               fovAngle={60}
@@ -379,10 +392,10 @@ const NavigationMapScreen: React.FC = () => {
           {location && (
             <Text style={styles.locationText}>
               📊 Accuracy: {location.accuracy.toFixed(0)}m | 🧭 Bearing:{' '}
-              {(location.compassHeading !== undefined 
-                ? location.compassHeading 
+              {(compassActive && compassHeading !== undefined
+                ? compassHeading 
                 : location.heading).toFixed(0)}°
-              {location.compassHeading !== undefined && ' (Compass)'}
+              {compassActive && ' (Compass)'}
             </Text>
           )}
 
@@ -433,13 +446,12 @@ const NavigationMapScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Compass Debugger - Temporary */}
+      {/* Compass Control Panel */}
+      <CompassControlPanel />
+      
+      {/* Debug Components - Temporary */}
       <CombinedCompassDebugger />
-      
-      {/* Compass Test Component - Temporary */}
       <CompassTestComponent />
-      
-      {/* Simple Compass Test - Temporary */}
       <SimpleCompassTest />
     </View>
   );

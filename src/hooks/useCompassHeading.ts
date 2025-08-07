@@ -17,7 +17,6 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
   const [isActive, setIsActive] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const subscriptionRef = useRef<any>(null);
-  const lastHeadingRef = useRef<number>(0);
 
   // Throttled heading update
   const throttledSetHeading = useCallback(
@@ -38,70 +37,19 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
       setError(null);
       setIsActive(true);
       
-      // Check if CompassHeading is available
-      if (!CompassHeading || typeof CompassHeading.start !== 'function') {
-        throw new Error('CompassHeading library not available');
-      }
-      
       subscriptionRef.current = CompassHeading.start(1, (headingData: any) => {
-        try {
-          console.log('useCompassHeading - Raw compass data received:', headingData);
-          console.log('useCompassHeading - Data type:', typeof headingData);
-          console.log('useCompassHeading - Data keys:', Object.keys(headingData || {}));
-          
-          if (!headingData) {
-            console.warn('useCompassHeading - No heading data received');
-            return;
-          }
-          
-          const { heading: rawHeading, accuracy: rawAccuracy } = headingData;
-          
-          console.log('useCompassHeading - Extracted values:', {
-            rawHeading,
-            rawAccuracy,
-            headingType: typeof rawHeading,
-            accuracyType: typeof rawAccuracy
-          });
-          
-          // Validate raw heading
-          if (typeof rawHeading !== 'number' || isNaN(rawHeading)) {
-            console.warn('useCompassHeading - Invalid raw heading:', rawHeading);
-            return;
-          }
-          
+        console.log('useCompassHeading - Raw data:', headingData);
+        
+        if (headingData && typeof headingData.heading === 'number') {
           // Normalize heading to 0-360 range
-          let normalizedHeading = ((rawHeading % 360) + 360) % 360;
+          let normalizedHeading = ((headingData.heading % 360) + 360) % 360;
           
-          // Simple smoothing to prevent jitter
-          const smoothingFactor = 0.3;
-          const diff = normalizedHeading - lastHeadingRef.current;
-          const smoothedHeading = lastHeadingRef.current + diff * smoothingFactor;
+          console.log('useCompassHeading - Setting heading:', normalizedHeading);
+          throttledSetHeading(normalizedHeading);
           
-          console.log('useCompassHeading - Processing heading:', {
-            raw: rawHeading,
-            normalized: normalizedHeading,
-            smoothed: smoothedHeading,
-            accuracy: rawAccuracy,
-            diff: diff
-          });
-          
-          // Update heading if there's a significant change
-          if (Math.abs(diff) > 0.5) {
-            console.log('useCompassHeading - Updating heading to:', smoothedHeading);
-            throttledSetHeading(smoothedHeading);
-            lastHeadingRef.current = smoothedHeading;
+          if (headingData.accuracy) {
+            setAccuracy(headingData.accuracy);
           }
-          
-          // Update accuracy
-          if (typeof rawAccuracy === 'number' && !isNaN(rawAccuracy)) {
-            console.log('useCompassHeading - Updating accuracy to:', rawAccuracy);
-            setAccuracy(rawAccuracy);
-          } else {
-            console.warn('useCompassHeading - Invalid accuracy value:', rawAccuracy);
-          }
-        } catch (err) {
-          console.error('useCompassHeading - Error processing compass data:', err);
-          setError('Failed to process compass data');
         }
       });
       
@@ -124,7 +72,6 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
       subscriptionRef.current = null;
     }
     setIsActive(false);
-    lastHeadingRef.current = 0;
   };
 
   useEffect(() => {

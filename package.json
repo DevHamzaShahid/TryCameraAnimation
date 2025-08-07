@@ -15,7 +15,8 @@
     "react": "19.1.0",
     "react-native": "0.80.2",
     "react-native-compass-heading": "^2.0.2",
-    "react-native-maps": "^1.25.0"
+    "react-native-maps": "^1.25.0",
+    "react-native-svg": "^15.12.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

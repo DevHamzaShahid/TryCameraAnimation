@@ -16,6 +16,7 @@ import {
 import { EnhancedUserLocationMarker } from '../components/EnhancedUserLocationMarker';
 import { CombinedCompassDebugger } from '../components/CombinedCompassDebugger';
 import { CompassTestComponent } from '../components/CompassTestComponent';
+import { SimpleCompassTest } from '../components/SimpleCompassTest';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useNavigationCamera } from '../hooks/useNavigationCamera';
 import { useWaypointNavigation } from '../hooks/useWaypointNavigation';
@@ -32,15 +33,13 @@ const NavigationMapScreen: React.FC = () => {
   const mapRef = useRef<MapView>(null);
   const directionsService = useRef(new DirectionsService()).current;
 
-  // Location tracking with compass calibration
+  // Location tracking
   const { 
     location, 
     isTracking, 
     error, 
     startTracking, 
-    stopTracking,
-    calibrateCompass,
-    isCompassCalibrated 
+    stopTracking
   } = useLocationTracking();
 
   // Camera management
@@ -115,8 +114,7 @@ const NavigationMapScreen: React.FC = () => {
       console.log('NavigationMapScreen - Location update:', {
         gpsHeading: location.heading,
         compassHeading: location.compassHeading,
-        effectiveHeading: effectiveHeading,
-        isCompassCalibrated
+        effectiveHeading: effectiveHeading
       });
       
       if (effectiveHeading !== undefined) {
@@ -233,24 +231,6 @@ const NavigationMapScreen: React.FC = () => {
       console.log('NavigationMapScreen - Focusing on route');
     }
   }, [navigationState.activeRoute, focusOnRoute]);
-
-  // Handle compass calibration
-  const handleCalibrateCompass = useCallback(() => {
-    Alert.alert(
-      'Compass Calibration',
-      'Please rotate your device in a figure-8 pattern for 10 seconds to calibrate the compass.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Start Calibration', 
-          onPress: () => {
-            calibrateCompass();
-            console.log('NavigationMapScreen - Compass calibration started');
-          }
-        }
-      ]
-    );
-  }, [calibrateCompass]);
 
   const getRouteColor = () => {
     if (navigationState.navigationMode === 'auto') return '#27AE60';
@@ -403,7 +383,6 @@ const NavigationMapScreen: React.FC = () => {
                 ? location.compassHeading 
                 : location.heading).toFixed(0)}°
               {location.compassHeading !== undefined && ' (Compass)'}
-              {isCompassCalibrated && ' ✓'}
             </Text>
           )}
 
@@ -423,19 +402,6 @@ const NavigationMapScreen: React.FC = () => {
           <View style={styles.compassNeedle} />
         </View>
       </View>
-
-      {/* Compass Calibration Button */}
-      <TouchableOpacity
-        style={[
-          styles.calibrationButton,
-          { backgroundColor: isCompassCalibrated ? '#27AE60' : '#F39C12' }
-        ]}
-        onPress={handleCalibrateCompass}
-      >
-        <Text style={styles.calibrationButtonText}>
-          {isCompassCalibrated ? '✓ Calibrated' : '🧭 Calibrate'}
-        </Text>
-      </TouchableOpacity>
 
       {/* Waypoint Progress */}
       <View style={styles.progressContainer}>
@@ -472,6 +438,9 @@ const NavigationMapScreen: React.FC = () => {
       
       {/* Compass Test Component - Temporary */}
       <CompassTestComponent />
+      
+      {/* Simple Compass Test - Temporary */}
+      <SimpleCompassTest />
     </View>
   );
 };

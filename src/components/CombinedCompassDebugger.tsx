@@ -15,29 +15,27 @@ export const CombinedCompassDebugger: React.FC = () => {
       heading: compass.heading,
       isActive: compass.isActive,
       accuracy: compass.accuracy,
-      error: compass.error,
-      isCalibrated: compass.isCalibrated
+      error: compass.error
     });
-  }, [compass.heading, compass.isActive, compass.accuracy, compass.error, compass.isCalibrated]);
+  }, [compass.heading, compass.isActive, compass.accuracy, compass.error]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Compass Debug</Text>
       
       <View style={styles.section}>
-        <Text style={styles.subtitle}>Enhanced Compass</Text>
+        <Text style={styles.subtitle}>Compass Data</Text>
         <Text style={styles.text}>Heading: {Math.round(compass.heading)}°</Text>
         <Text style={styles.text}>Accuracy: {compass.accuracy.toFixed(1)}°</Text>
         <Text style={styles.text}>Active: {compass.isActive ? 'Yes' : 'No'}</Text>
-        <Text style={styles.text}>Calibrated: {compass.isCalibrated ? 'Yes' : 'No'}</Text>
         {compass.error && <Text style={styles.error}>Error: {compass.error}</Text>}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.subtitle}>Instructions</Text>
-        <Text style={styles.instruction}>1. Rotate device in figure-8 pattern</Text>
-        <Text style={styles.instruction}>2. Look for heading changes</Text>
-        <Text style={styles.instruction}>3. Should see 0-360° range</Text>
+        <Text style={styles.instruction}>1. Rotate device to see heading changes</Text>
+        <Text style={styles.instruction}>2. Should see values between 0-360°</Text>
+        <Text style={styles.instruction}>3. Check console for raw data</Text>
       </View>
     </View>
   );

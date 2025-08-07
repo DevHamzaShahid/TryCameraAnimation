@@ -36,7 +36,7 @@ export const CompassTestComponent: React.FC = () => {
       
       <View style={styles.dataRow}>
         <Text style={styles.label}>Accuracy:</Text>
-        <Text style={styles.value}>{compass.accuracy.toFixed(1)}%</Text>
+        <Text style={styles.value}>{compass.accuracy.toFixed(1)}°</Text>
       </View>
       
       <View style={styles.dataRow}>
@@ -46,25 +46,11 @@ export const CompassTestComponent: React.FC = () => {
         </Text>
       </View>
       
-      <View style={styles.dataRow}>
-        <Text style={styles.label}>Calibrated:</Text>
-        <Text style={[styles.value, { color: compass.isCalibrated ? '#27AE60' : '#F39C12' }]}>
-          {compass.isCalibrated ? 'Yes' : 'No'}
-        </Text>
-      </View>
-      
       {compass.error && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error: {compass.error}</Text>
         </View>
       )}
-      
-      <TouchableOpacity 
-        style={styles.calibrateButton}
-        onPress={compass.calibrateCompass}
-      >
-        <Text style={styles.calibrateButtonText}>Calibrate Compass</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -124,17 +110,5 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#E74C3C',
     fontSize: 11,
-  },
-  calibrateButton: {
-    marginTop: 10,
-    backgroundColor: '#F39C12',
-    padding: 8,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  calibrateButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
 }); 

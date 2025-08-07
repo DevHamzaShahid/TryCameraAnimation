@@ -15,7 +15,7 @@ import {
 } from '../components/WaypointMarkers';
 import { EnhancedUserLocationMarker } from '../components/EnhancedUserLocationMarker';
 import { CombinedCompassDebugger } from '../components/CombinedCompassDebugger';
-import { ManualRotationTest } from '../components/ManualRotationTest';
+import { CompassTestComponent } from '../components/CompassTestComponent';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useNavigationCamera } from '../hooks/useNavigationCamera';
 import { useWaypointNavigation } from '../hooks/useWaypointNavigation';
@@ -32,9 +32,16 @@ const NavigationMapScreen: React.FC = () => {
   const mapRef = useRef<MapView>(null);
   const directionsService = useRef(new DirectionsService()).current;
 
-  // Location tracking
-  const { location, isTracking, error, startTracking, stopTracking } =
-    useLocationTracking();
+  // Location tracking with compass calibration
+  const { 
+    location, 
+    isTracking, 
+    error, 
+    startTracking, 
+    stopTracking,
+    calibrateCompass,
+    isCompassCalibrated 
+  } = useLocationTracking();
 
   // Camera management
   const {
@@ -67,7 +74,6 @@ const NavigationMapScreen: React.FC = () => {
   // State for UI
   const [showWaypointList, setShowWaypointList] = useState(false);
   const [compassBearing, setCompassBearing] = useState(0);
-  const [manualHeading, setManualHeading] = useState<number | null>(null);
 
   useEffect(() => {
     // Start location tracking and animate UI
@@ -109,7 +115,8 @@ const NavigationMapScreen: React.FC = () => {
       console.log('NavigationMapScreen - Location update:', {
         gpsHeading: location.heading,
         compassHeading: location.compassHeading,
-        effectiveHeading: effectiveHeading
+        effectiveHeading: effectiveHeading,
+        isCompassCalibrated
       });
       
       if (effectiveHeading !== undefined) {
@@ -199,50 +206,66 @@ const NavigationMapScreen: React.FC = () => {
 
   // Start auto navigation
   const handleStartAutoNavigation = useCallback(() => {
-    if (!location) {
-      Alert.alert(
-        'Location Required',
-        'Please wait for location to be available.',
-      );
+    if (waypoints.length === 0) {
+      Alert.alert('No Waypoints', 'Please add waypoints before starting navigation.');
       return;
     }
-    startNavigation('auto');
-  }, [location, startNavigation]);
+
+    startNavigation();
+    console.log('NavigationMapScreen - Auto navigation started');
+  }, [waypoints.length, startNavigation]);
 
   // Start manual navigation
   const handleStartManualNavigation = useCallback(() => {
-    if (!location) {
-      Alert.alert(
-        'Location Required',
-        'Please wait for location to be available.',
-      );
+    if (waypoints.length === 0) {
+      Alert.alert('No Waypoints', 'Please add waypoints before starting navigation.');
       return;
     }
-    startNavigation('manual');
-  }, [location, startNavigation]);
 
-  // Focus on current route
+    startNavigation();
+    console.log('NavigationMapScreen - Manual navigation started');
+  }, [waypoints.length, startNavigation]);
+
+  // Focus on route
   const handleFocusRoute = useCallback(() => {
-    if (location && navigationState.currentWaypoint) {
-      focusOnRoute(
-        { latitude: location.latitude, longitude: location.longitude },
-        {
-          latitude: navigationState.currentWaypoint.latitude,
-          longitude: navigationState.currentWaypoint.longitude,
-        },
-      );
+    if (navigationState.activeRoute) {
+      focusOnRoute();
+      console.log('NavigationMapScreen - Focusing on route');
     }
-  }, [location, navigationState.currentWaypoint, focusOnRoute]);
+  }, [navigationState.activeRoute, focusOnRoute]);
 
-  // Get route polyline color
+  // Handle compass calibration
+  const handleCalibrateCompass = useCallback(() => {
+    Alert.alert(
+      'Compass Calibration',
+      'Please rotate your device in a figure-8 pattern for 10 seconds to calibrate the compass.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Start Calibration', 
+          onPress: () => {
+            calibrateCompass();
+            console.log('NavigationMapScreen - Compass calibration started');
+          }
+        }
+      ]
+    );
+  }, [calibrateCompass]);
+
   const getRouteColor = () => {
-    return navigationState.currentWaypoint?.color || '#007AFF';
+    if (navigationState.navigationMode === 'auto') return '#27AE60';
+    if (navigationState.navigationMode === 'manual') return '#3498DB';
+    return '#9B59B6';
   };
 
   return (
     <View style={styles.container}>
-      {/* Map */}
-      <Animated.View style={[styles.mapContainer, { opacity: fadeAnim }]}>
+      <Animated.View
+        style={[
+          styles.mapContainer,
+          { opacity: fadeAnim },
+        ]}
+      >
         <MapView
           ref={mapRef}
           style={styles.map}
@@ -269,7 +292,7 @@ const NavigationMapScreen: React.FC = () => {
                 longitude: location.longitude,
               }}
               heading={location.heading}
-              compassHeading={manualHeading !== null ? manualHeading : location.compassHeading}
+              compassHeading={location.compassHeading}
               isNavigating={navigationState.isNavigating}
               showFOVCone={true}
               fovAngle={60}
@@ -380,6 +403,7 @@ const NavigationMapScreen: React.FC = () => {
                 ? location.compassHeading 
                 : location.heading).toFixed(0)}°
               {location.compassHeading !== undefined && ' (Compass)'}
+              {isCompassCalibrated && ' ✓'}
             </Text>
           )}
 
@@ -399,6 +423,19 @@ const NavigationMapScreen: React.FC = () => {
           <View style={styles.compassNeedle} />
         </View>
       </View>
+
+      {/* Compass Calibration Button */}
+      <TouchableOpacity
+        style={[
+          styles.calibrationButton,
+          { backgroundColor: isCompassCalibrated ? '#27AE60' : '#F39C12' }
+        ]}
+        onPress={handleCalibrateCompass}
+      >
+        <Text style={styles.calibrationButtonText}>
+          {isCompassCalibrated ? '✓ Calibrated' : '🧭 Calibrate'}
+        </Text>
+      </TouchableOpacity>
 
       {/* Waypoint Progress */}
       <View style={styles.progressContainer}>
@@ -432,9 +469,9 @@ const NavigationMapScreen: React.FC = () => {
 
       {/* Compass Debugger - Temporary */}
       <CombinedCompassDebugger />
-
-      {/* Manual Rotation Test - Temporary */}
-      <ManualRotationTest onHeadingChange={setManualHeading} />
+      
+      {/* Compass Test Component - Temporary */}
+      <CompassTestComponent />
     </View>
   );
 };
@@ -618,6 +655,28 @@ const styles = StyleSheet.create({
   animationText: {
     color: 'white',
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+  calibrationButton: {
+    position: 'absolute',
+    bottom: 10,
+    left: 20,
+    right: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  calibrationButtonText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

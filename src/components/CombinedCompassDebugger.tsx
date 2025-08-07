@@ -1,50 +1,43 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useSimpleCompass } from '../hooks/useSimpleCompass';
-import { useSensorsCompass } from '../hooks/useSensorsCompass';
+import { useCompassHeading } from '../hooks/useCompassHeading';
 
 export const CombinedCompassDebugger: React.FC = () => {
-  const simpleCompass = useSimpleCompass();
-  const sensorsCompass = useSensorsCompass();
+  const compass = useCompassHeading();
 
   useEffect(() => {
-    console.log('CombinedCompassDebugger - Starting both compasses...');
-    simpleCompass.startCompass();
-    sensorsCompass.startCompass();
-  }, [simpleCompass.startCompass, sensorsCompass.startCompass]);
+    console.log('CombinedCompassDebugger - Starting compass...');
+    compass.startCompass();
+  }, [compass.startCompass]);
 
   useEffect(() => {
-    console.log('CombinedCompassDebugger - Simple compass state:', {
-      heading: simpleCompass.heading,
-      isActive: simpleCompass.isActive,
-      error: simpleCompass.error
+    console.log('CombinedCompassDebugger - Compass state:', {
+      heading: compass.heading,
+      isActive: compass.isActive,
+      accuracy: compass.accuracy,
+      error: compass.error,
+      isCalibrated: compass.isCalibrated
     });
-  }, [simpleCompass.heading, simpleCompass.isActive, simpleCompass.error]);
-
-  useEffect(() => {
-    console.log('CombinedCompassDebugger - Sensors compass state:', {
-      heading: sensorsCompass.heading,
-      isActive: sensorsCompass.isActive,
-      error: sensorsCompass.error
-    });
-  }, [sensorsCompass.heading, sensorsCompass.isActive, sensorsCompass.error]);
+  }, [compass.heading, compass.isActive, compass.accuracy, compass.error, compass.isCalibrated]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Compass Debug</Text>
       
       <View style={styles.section}>
-        <Text style={styles.subtitle}>Simple Compass</Text>
-        <Text style={styles.text}>Heading: {Math.round(simpleCompass.heading)}°</Text>
-        <Text style={styles.text}>Active: {simpleCompass.isActive ? 'Yes' : 'No'}</Text>
-        {simpleCompass.error && <Text style={styles.error}>Error: {simpleCompass.error}</Text>}
+        <Text style={styles.subtitle}>Enhanced Compass</Text>
+        <Text style={styles.text}>Heading: {Math.round(compass.heading)}°</Text>
+        <Text style={styles.text}>Accuracy: {compass.accuracy.toFixed(1)}°</Text>
+        <Text style={styles.text}>Active: {compass.isActive ? 'Yes' : 'No'}</Text>
+        <Text style={styles.text}>Calibrated: {compass.isCalibrated ? 'Yes' : 'No'}</Text>
+        {compass.error && <Text style={styles.error}>Error: {compass.error}</Text>}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.subtitle}>Sensors Compass</Text>
-        <Text style={styles.text}>Heading: {Math.round(sensorsCompass.heading)}°</Text>
-        <Text style={styles.text}>Active: {sensorsCompass.isActive ? 'Yes' : 'No'}</Text>
-        {sensorsCompass.error && <Text style={styles.error}>Error: {sensorsCompass.error}</Text>}
+        <Text style={styles.subtitle}>Instructions</Text>
+        <Text style={styles.instruction}>1. Rotate device in figure-8 pattern</Text>
+        <Text style={styles.instruction}>2. Look for heading changes</Text>
+        <Text style={styles.instruction}>3. Should see 0-360° range</Text>
       </View>
     </View>
   );
@@ -81,6 +74,11 @@ const styles = StyleSheet.create({
   text: {
     color: 'white',
     fontSize: 12,
+  },
+  instruction: {
+    color: '#4ECDC4',
+    fontSize: 11,
+    marginBottom: 2,
   },
   error: {
     color: 'red',

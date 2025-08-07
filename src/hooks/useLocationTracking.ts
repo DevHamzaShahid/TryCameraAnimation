@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid, Platform, Alert } from 'react-native';
 import { calculateBearing } from '../utils/locationUtils';
-import { useSimpleCompass } from './useSimpleCompass';
+import { useCompassHeading } from './useCompassHeading';
 
 interface LocationState {
   latitude: number;
@@ -19,6 +19,8 @@ interface UseLocationTrackingReturn {
   error: string | null;
   startTracking: () => void;
   stopTracking: () => void;
+  calibrateCompass: () => void;
+  isCompassCalibrated: boolean;
 }
 
 export const useLocationTracking = (): UseLocationTrackingReturn => {
@@ -28,23 +30,28 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
   const watchIdRef = useRef<number | null>(null);
   const previousLocationRef = useRef<LocationState | null>(null);
   
-  // Use compass heading for more accurate orientation
+  // Use improved compass heading for more accurate orientation
   const { 
     heading: compassHeading, 
     isActive: compassActive, 
+    accuracy: compassAccuracy,
     startCompass, 
     stopCompass,
-    error: compassError 
-  } = useSimpleCompass();
+    error: compassError,
+    calibrateCompass,
+    isCalibrated: isCompassCalibrated
+  } = useCompassHeading();
 
   // Debug logging for compass state
   useEffect(() => {
     console.log('useLocationTracking - Compass state:', {
       compassHeading,
       compassActive,
-      compassError
+      compassAccuracy,
+      compassError,
+      isCompassCalibrated
     });
-  }, [compassHeading, compassActive, compassError]);
+  }, [compassHeading, compassActive, compassAccuracy, compassError, isCompassCalibrated]);
 
   const requestLocationPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
@@ -100,6 +107,12 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
         };
         setLocation(newLocation);
         previousLocationRef.current = newLocation;
+        
+        console.log('useLocationTracking - Initial location set:', {
+          gpsHeading: position.coords.heading,
+          compassHeading: compassActive ? compassHeading : 'not available',
+          accuracy: position.coords.accuracy
+        });
       },
       error => {
         console.error('Error getting initial position:', error);
@@ -142,6 +155,14 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
 
         setLocation(newLocation);
         previousLocationRef.current = newLocation;
+        
+        // Debug logging for location updates
+        console.log('useLocationTracking - Location update:', {
+          gpsHeading: position.coords.heading,
+          compassHeading: compassActive ? compassHeading : 'not available',
+          accuracy: position.coords.accuracy,
+          isCompassCalibrated
+        });
       },
       error => {
         console.error('Error watching position:', error);
@@ -177,5 +198,7 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
     error,
     startTracking,
     stopTracking,
+    calibrateCompass,
+    isCompassCalibrated,
   };
 };

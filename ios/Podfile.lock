@@ -1648,6 +1648,125 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
+  - react-native-compass-heading (2.0.2):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - react-native-geolocation (3.4.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - react-native-maps (1.25.0):
+    - react-native-maps/Maps (= 1.25.0)
+  - react-native-maps/Generated (1.25.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - react-native-maps/Maps (1.25.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - react-native-maps/Generated
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - React-NativeModulesApple (0.80.2):
     - boost
     - DoubleConversion
@@ -2167,6 +2286,9 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-compass-heading (from `../node_modules/react-native-compass-heading`)
+  - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
+  - react-native-maps (from `../node_modules/react-native-maps`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -2287,6 +2409,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-compass-heading:
+    :path: "../node_modules/react-native-compass-heading"
+  react-native-geolocation:
+    :path: "../node_modules/@react-native-community/geolocation"
+  react-native-maps:
+    :path: "../node_modules/react-native-maps"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-oscompat:
@@ -2393,20 +2521,23 @@ SPEC CHECKSUMS:
   React-logger: ea80169d826e0cd112fa4d68f58b2b3b968f1ecb
   React-Mapbuffer: a5d550d1add940ed2bc65b20dc1413407bf1a63f
   React-microtasksnativemodule: 5d00fefc19f0bc9a6432e5533683d6fc9c3da4e1
+  react-native-compass-heading: d0917f83c30db8fe03fd3f873eba48afa702997b
+  react-native-geolocation: 742605b1a37809c0d4363eeaf61036842f52460c
+  react-native-maps: 7bf43c38a75e8789dbc78446f1a6e2b6bac9dd5f
   React-NativeModulesApple: b22e6abb44d78270dfdfc7d85efe29e35e0333a7
   React-oscompat: 56d6de59f9ae95cd006a1c40be2cde83bc06a4e1
   React-perflogger: 0633844e495d8b34798c9bf0cb32ce315f1d5c9f
   React-performancetimeline: a04dae9154c32eda1891fcfa51cb2680a0421b3e
   React-RCTActionSheet: 49138012280ec3bbb35193d8d09adb8bc61c982e
   React-RCTAnimation: c7ed4a9d5a4e43c9b10f68bb43cd238c4a2e7e89
-  React-RCTAppDelegate: b51f1607cf6c05bc914801ef4de51838cf47d5a4
+  React-RCTAppDelegate: ea2ab6f4aef1489f72025b7128d8ab645b40eafb
   React-RCTBlob: c052799460b245e1fffe3d1dddea36fa88e998a0
-  React-RCTFabric: f4eacc854a4b26a0c1c81e982a6cecc3cbcdb895
-  React-RCTFBReactNativeSpec: 20d0082be8e34beed9a584016ec8db9c8d9882e0
+  React-RCTFabric: e7acf005f8ed58d09f755b980ff83703b3af9fcf
+  React-RCTFBReactNativeSpec: ffb22c3ee3d359ae9245ca94af203845da9371ec
   React-RCTImage: 59fc2571f4f109a77139924f5babee8f9cd639c9
   React-RCTLinking: a045cb58c08188dce6c6f4621de105114b1b16ce
   React-RCTNetwork: fc7115a2f5e15ae0aa05e9a9be726817feefb482
-  React-RCTRuntime: f91220f4d0c6096b94726804afc5091151eac9c0
+  React-RCTRuntime: a7bca9be4f571586b2a9d4b57cf605421ffb6335
   React-RCTSettings: 30d7dd7eae66290467a1e72bf42d927fa78c3884
   React-RCTText: 755d59284e66c7d33bb4f0ccc428fe69110c3e74
   React-RCTVibration: ffe019e588815df226f6f8ccdc65979f8b2bc440
@@ -2425,7 +2556,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 9ea66ee246511816b72e9d6e380f884b7b3b99d7
   ReactCommon: 7aca047f2f453a7d7f0adeccb63810d61829235a
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  Yoga: 1c52fbd270869e556504def7e94fffbf67f53f7b
+  Yoga: a742cc68e8366fcfc681808162492bc0aa7a9498
 
 PODFILE CHECKSUM: 5835143ac74d2d94a62e4cdfa5b236c745a965fb
 

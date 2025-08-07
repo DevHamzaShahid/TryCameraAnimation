@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TryCameraAnimation</string>
+
+  <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyDwK5Xp8GFmWZ1yTpOin7Ma2gFLXxpIqhM</string>
 </resources>

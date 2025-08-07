@@ -74,7 +74,6 @@ const NavigationMapScreen: React.FC = () => {
   // State for UI
   const [showWaypointList, setShowWaypointList] = useState(false);
   const [compassBearing, setCompassBearing] = useState(0);
-  const [isFollowingUser, setIsFollowingUser] = useState(true);
 
   useEffect(() => {
     // Start location tracking and compass
@@ -104,22 +103,12 @@ const NavigationMapScreen: React.FC = () => {
   useEffect(() => {
     if (compassActive && compassHeading !== undefined) {
       setCompassBearing(compassHeading);
+      console.log(
+        'NavigationMapScreen - Compass bearing updated:',
+        compassHeading,
+      );
     }
   }, [compassHeading, compassActive]);
-
-  // Google Maps-style camera behavior - keep user centered
-  useEffect(() => {
-    if (location && isFollowingUser && mapRef.current) {
-      const region: Region = {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.01, // Closer zoom
-        longitudeDelta: 0.01,
-      };
-
-      mapRef.current.animateToRegion(region, 500);
-    }
-  }, [location, isFollowingUser]);
 
   // Update navigation when location changes
   useEffect(() => {
@@ -252,15 +241,9 @@ const NavigationMapScreen: React.FC = () => {
   const handleFocusRoute = useCallback(() => {
     if (navigationState.activeRoute) {
       focusOnRoute();
-      setIsFollowingUser(false);
       console.log('NavigationMapScreen - Focusing on route');
     }
   }, [navigationState.activeRoute, focusOnRoute]);
-
-  // Toggle user following
-  const handleToggleUserFollowing = useCallback(() => {
-    setIsFollowingUser(!isFollowingUser);
-  }, [isFollowingUser]);
 
   const getRouteColor = () => {
     if (navigationState.navigationMode === 'auto') return '#27AE60';
@@ -288,12 +271,6 @@ const NavigationMapScreen: React.FC = () => {
           rotateEnabled={true}
           zoomEnabled={true}
           scrollEnabled={true}
-          onRegionChangeComplete={() => {
-            // When user manually moves map, stop auto-following
-            if (isFollowingUser) {
-              setIsFollowingUser(false);
-            }
-          }}
         >
           {/* Enhanced User location marker with FOV cone */}
           {location && (
@@ -327,7 +304,6 @@ const NavigationMapScreen: React.FC = () => {
               coordinates={navigationState.activeRoute}
               strokeColor={getRouteColor()}
               strokeWidth={6}
-              strokePattern={[20, 10]}
               lineDashPhase={0}
             />
           )}
@@ -371,7 +347,7 @@ const NavigationMapScreen: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.controlButton, { backgroundColor: '#9B59B6' }]}
-          onPress={rotateToNorth}
+          onPress={() => rotateToNorth(true)}
         >
           <Text style={styles.controlButtonText}>🧭 North</Text>
         </TouchableOpacity>

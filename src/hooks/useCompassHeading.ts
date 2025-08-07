@@ -17,36 +17,8 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
   const [error, setError] = useState<string | null>(null);
   const subscriptionRef = useRef<any>(null);
   const lastHeadingRef = useRef<number>(0);
-  const updateTimeoutRef = useRef<number | null>(null);
 
-  // Smooth heading update with debouncing
-  const updateHeading = useCallback((newHeading: number) => {
-    // Clear any pending update
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
-
-    // Debounce updates to prevent excessive re-renders
-    updateTimeoutRef.current = setTimeout(() => {
-      // Simple smoothing to prevent jitter
-      const smoothingFactor = 0.3;
-      const diff = newHeading - lastHeadingRef.current;
-
-      // Handle 360° wraparound
-      let adjustedDiff = diff;
-      if (diff > 180) adjustedDiff = diff - 360;
-      if (diff < -180) adjustedDiff = diff + 360;
-
-      const smoothedHeading =
-        lastHeadingRef.current + adjustedDiff * smoothingFactor;
-      const normalizedHeading = ((smoothedHeading % 360) + 360) % 360;
-
-      setHeading(normalizedHeading);
-      lastHeadingRef.current = normalizedHeading;
-    }, 50); // 50ms debounce
-  }, []);
-
-  const startCompass = () => {
+  const startCompass = useCallback(() => {
     if (subscriptionRef.current) {
       console.log('useCompassHeading - Compass already started');
       return;
@@ -58,11 +30,17 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
       setIsActive(true);
 
       subscriptionRef.current = CompassHeading.start(1, (headingData: any) => {
+        console.log('useCompassHeading - Raw data:', headingData);
+
         if (headingData && typeof headingData.heading === 'number') {
           // Normalize heading to 0-360 range
           let normalizedHeading = ((headingData.heading % 360) + 360) % 360;
 
-          updateHeading(normalizedHeading);
+          console.log(
+            'useCompassHeading - Setting heading:',
+            normalizedHeading,
+          );
+          setHeading(normalizedHeading);
 
           if (headingData.accuracy) {
             setAccuracy(headingData.accuracy);
@@ -76,9 +54,9 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
       setError(`Compass error: ${err.message || 'Unknown error'}`);
       setIsActive(false);
     }
-  };
+  }, []);
 
-  const stopCompass = () => {
+  const stopCompass = useCallback(() => {
     console.log('useCompassHeading - Stopping compass...');
     if (subscriptionRef.current) {
       try {
@@ -88,18 +66,14 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
       }
       subscriptionRef.current = null;
     }
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
     setIsActive(false);
-    lastHeadingRef.current = 0;
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       stopCompass();
     };
-  }, []);
+  }, [stopCompass]);
 
   return {
     heading,

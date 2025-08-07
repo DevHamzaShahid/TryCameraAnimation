@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import CompassHeading from 'react-native-compass-heading';
-import { throttle } from '../utils/performanceUtils';
 
 interface UseCompassHeadingReturn {
   heading: number;
@@ -17,14 +16,35 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
   const [isActive, setIsActive] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const subscriptionRef = useRef<any>(null);
+  const lastHeadingRef = useRef<number>(0);
+  const updateTimeoutRef = useRef<number | null>(null);
 
-  // Throttled heading update
-  const throttledSetHeading = useCallback(
-    throttle((newHeading: number) => {
-      setHeading(newHeading);
-    }, 100),
-    []
-  );
+  // Smooth heading update with debouncing
+  const updateHeading = useCallback((newHeading: number) => {
+    // Clear any pending update
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    // Debounce updates to prevent excessive re-renders
+    updateTimeoutRef.current = setTimeout(() => {
+      // Simple smoothing to prevent jitter
+      const smoothingFactor = 0.3;
+      const diff = newHeading - lastHeadingRef.current;
+
+      // Handle 360° wraparound
+      let adjustedDiff = diff;
+      if (diff > 180) adjustedDiff = diff - 360;
+      if (diff < -180) adjustedDiff = diff + 360;
+
+      const smoothedHeading =
+        lastHeadingRef.current + adjustedDiff * smoothingFactor;
+      const normalizedHeading = ((smoothedHeading % 360) + 360) % 360;
+
+      setHeading(normalizedHeading);
+      lastHeadingRef.current = normalizedHeading;
+    }, 50); // 50ms debounce
+  }, []);
 
   const startCompass = () => {
     if (subscriptionRef.current) {
@@ -36,23 +56,20 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
     try {
       setError(null);
       setIsActive(true);
-      
+
       subscriptionRef.current = CompassHeading.start(1, (headingData: any) => {
-        console.log('useCompassHeading - Raw data:', headingData);
-        
         if (headingData && typeof headingData.heading === 'number') {
           // Normalize heading to 0-360 range
           let normalizedHeading = ((headingData.heading % 360) + 360) % 360;
-          
-          console.log('useCompassHeading - Setting heading:', normalizedHeading);
-          throttledSetHeading(normalizedHeading);
-          
+
+          updateHeading(normalizedHeading);
+
           if (headingData.accuracy) {
             setAccuracy(headingData.accuracy);
           }
         }
       });
-      
+
       console.log('useCompassHeading - Compass started successfully');
     } catch (err: any) {
       console.error('useCompassHeading - Error starting compass:', err);
@@ -71,7 +88,11 @@ export const useCompassHeading = (): UseCompassHeadingReturn => {
       }
       subscriptionRef.current = null;
     }
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
     setIsActive(false);
+    lastHeadingRef.current = 0;
   };
 
   useEffect(() => {

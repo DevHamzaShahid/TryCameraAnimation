@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { FieldOfViewCone, SimpleFieldOfViewCone } from './FieldOfViewCone';
@@ -16,7 +16,9 @@ interface EnhancedUserLocationMarkerProps {
   accuracy?: number;
 }
 
-export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProps> = ({
+export const EnhancedUserLocationMarker: React.FC<
+  EnhancedUserLocationMarkerProps
+> = ({
   coordinate,
   heading,
   compassHeading,
@@ -30,23 +32,18 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // Use compass heading if available, otherwise fall back to GPS heading
-  const effectiveHeading = compassHeading !== undefined ? compassHeading : heading;
+  const effectiveHeading = useMemo(() => {
+    return compassHeading !== undefined ? compassHeading : heading;
+  }, [compassHeading, heading]);
 
+  // Smooth rotation animation
   useEffect(() => {
-    // Debug logging
-    console.log('EnhancedUserLocationMarker - Heading update:', {
-      gpsHeading: heading,
-      compassHeading: compassHeading,
-      effectiveHeading: effectiveHeading
-    });
-
-    // Smooth rotation animation
     Animated.timing(rotationAnim, {
       toValue: effectiveHeading,
-      duration: 300,
+      duration: 200, // Faster animation for smoother rotation
       useNativeDriver: true,
     }).start();
-  }, [effectiveHeading, heading, compassHeading]);
+  }, [effectiveHeading, rotationAnim]);
 
   useEffect(() => {
     // Pulsing animation for navigation mode
@@ -82,7 +79,7 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
       tension: 100,
       friction: 8,
     }).start();
-  }, [accuracy]);
+  }, [accuracy, scaleAnim]);
 
   const getMarkerColor = () => {
     if (accuracy > 50) return '#FF6B6B'; // Red for poor accuracy
@@ -106,15 +103,16 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
       <View style={styles.markerContainer}>
         {/* Field of View Cone */}
         {showFOVCone && (
-          <Animated.View 
+          <Animated.View
             style={[
               styles.fovContainer,
               {
                 transform: [
-                  { rotate: rotationAnim.interpolate({
+                  {
+                    rotate: rotationAnim.interpolate({
                       inputRange: [0, 360],
                       outputRange: ['0deg', '360deg'],
-                    })
+                    }),
                   },
                 ],
               },
@@ -139,10 +137,11 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
             {
               transform: [
                 { scale: scaleAnim },
-                { rotate: rotationAnim.interpolate({
+                {
+                  rotate: rotationAnim.interpolate({
                     inputRange: [0, 360],
                     outputRange: ['0deg', '360deg'],
-                  })
+                  }),
                 },
               ],
             },
@@ -152,7 +151,7 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
           <View
             style={[
               styles.accuracyRing,
-              { 
+              {
                 borderColor: getMarkerColor(),
                 opacity: accuracy > 20 ? 0.3 : 0,
               },
@@ -219,7 +218,7 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
                       {
                         scale: pulseAnim.interpolate({
                           inputRange: [0, 1],
-                          outputRange: [1.2, 2.5],
+                          outputRange: [1, 2.5],
                         }),
                       },
                     ],
@@ -229,16 +228,6 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
             </>
           )}
         </Animated.View>
-
-        {/* Heading display */}
-        <View style={styles.headingDisplay}>
-          <Text style={styles.headingText}>
-            {Math.round(effectiveHeading)}°
-          </Text>
-          {compassHeading !== undefined && (
-            <Text style={styles.compassIndicator}>🧭</Text>
-          )}
-        </View>
       </View>
     </Marker>
   );
@@ -246,45 +235,38 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
 
 const styles = StyleSheet.create({
   markerContainer: {
-    width: 200,
-    height: 200,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   fovContainer: {
     position: 'absolute',
-    width: 160,
-    height: 160,
-    justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1,
+    justifyContent: 'center',
   },
   userLocationMarker: {
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
+    width: 40,
+    height: 40,
     alignItems: 'center',
-    zIndex: 2,
+    justifyContent: 'center',
+    position: 'relative',
   },
   navigatingMarker: {
-    width: 60,
-    height: 60,
+    // Additional styles for navigation mode
   },
   accuracyRing: {
     position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 2,
-    backgroundColor: 'transparent',
   },
   userLocationInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -292,76 +274,41 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    zIndex: 3,
   },
   userLocationIcon: {
-    fontSize: 18,
+    fontSize: 12,
     color: 'white',
   },
   directionPointer: {
     position: 'absolute',
-    top: -8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
+    top: -2,
+    width: 0,
+    height: 0,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    zIndex: 4,
   },
   pointerTriangle: {
     width: 0,
     height: 0,
     backgroundColor: 'transparent',
     borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 10,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderBottomWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
+    borderBottomColor: 'inherit',
   },
   pulseRing: {
     position: 'absolute',
-    borderRadius: 40,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 2,
-    backgroundColor: 'transparent',
   },
   pulseRing1: {
-    width: 60,
-    height: 60,
-    top: -5,
-    left: -5,
+    // First pulse ring
   },
   pulseRing2: {
-    width: 80,
-    height: 80,
-    top: -15,
-    left: -15,
-  },
-  headingDisplay: {
-    position: 'absolute',
-    bottom: -35,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 5,
-  },
-  headingText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  compassIndicator: {
-    fontSize: 10,
-    marginLeft: 4,
+    // Second pulse ring
   },
 });

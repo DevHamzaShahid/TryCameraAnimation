@@ -14,10 +14,7 @@ import {
   UserLocationMarker,
 } from '../components/WaypointMarkers';
 import { EnhancedUserLocationMarker } from '../components/EnhancedUserLocationMarker';
-import { CombinedCompassDebugger } from '../components/CombinedCompassDebugger';
-import { CompassTestComponent } from '../components/CompassTestComponent';
-import { SimpleCompassTest } from '../components/SimpleCompassTest';
-import { CompassControlPanel } from '../components/CompassControlPanel';
+import { SimpleCompassIndicator } from '../components/SimpleCompassIndicator';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useNavigationCamera } from '../hooks/useNavigationCamera';
 import { useWaypointNavigation } from '../hooks/useWaypointNavigation';
@@ -36,16 +33,15 @@ const NavigationMapScreen: React.FC = () => {
   const directionsService = useRef(new DirectionsService()).current;
 
   // Location tracking
-  const { 
-    location, 
-    isTracking, 
-    error, 
-    startTracking, 
-    stopTracking
-  } = useLocationTracking();
+  const { location, isTracking, error, startTracking, stopTracking } =
+    useLocationTracking();
 
   // Compass heading
-  const { heading: compassHeading, isActive: compassActive } = useCompassHeading();
+  const {
+    heading: compassHeading,
+    isActive: compassActive,
+    startCompass,
+  } = useCompassHeading();
 
   // Camera management
   const {
@@ -78,10 +74,12 @@ const NavigationMapScreen: React.FC = () => {
   // State for UI
   const [showWaypointList, setShowWaypointList] = useState(false);
   const [compassBearing, setCompassBearing] = useState(0);
+  const [isFollowingUser, setIsFollowingUser] = useState(true);
 
   useEffect(() => {
-    // Start location tracking and animate UI
+    // Start location tracking and compass
     startTracking();
+    startCompass();
 
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -106,9 +104,22 @@ const NavigationMapScreen: React.FC = () => {
   useEffect(() => {
     if (compassActive && compassHeading !== undefined) {
       setCompassBearing(compassHeading);
-      console.log('NavigationMapScreen - Compass bearing updated:', compassHeading);
     }
   }, [compassHeading, compassActive]);
+
+  // Google Maps-style camera behavior - keep user centered
+  useEffect(() => {
+    if (location && isFollowingUser && mapRef.current) {
+      const region: Region = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.01, // Closer zoom
+        longitudeDelta: 0.01,
+      };
+
+      mapRef.current.animateToRegion(region, 500);
+    }
+  }, [location, isFollowingUser]);
 
   // Update navigation when location changes
   useEffect(() => {
@@ -119,17 +130,10 @@ const NavigationMapScreen: React.FC = () => {
       });
 
       // Calculate bearing for compass - prefer compass heading over GPS heading
-      const effectiveHeading = compassActive && compassHeading !== undefined
-        ? compassHeading 
-        : location.heading;
-      
-      // Debug logging
-      console.log('NavigationMapScreen - Location update:', {
-        gpsHeading: location.heading,
-        compassHeading: compassHeading,
-        compassActive: compassActive,
-        effectiveHeading: effectiveHeading
-      });
+      const effectiveHeading =
+        compassActive && compassHeading !== undefined
+          ? compassHeading
+          : location.heading;
 
       // Follow location if navigating
       if (navigationState.isNavigating) {
@@ -151,10 +155,11 @@ const NavigationMapScreen: React.FC = () => {
   // Auto-rotate camera to north after turns
   useEffect(() => {
     if (navigationState.isNavigating && location) {
-      const effectiveHeading = compassActive && compassHeading !== undefined
-        ? compassHeading 
-        : location.heading;
-        
+      const effectiveHeading =
+        compassActive && compassHeading !== undefined
+          ? compassHeading
+          : location.heading;
+
       if (effectiveHeading !== undefined) {
         const headingChange = Math.abs(effectiveHeading - compassBearing);
 
@@ -218,7 +223,10 @@ const NavigationMapScreen: React.FC = () => {
   // Start auto navigation
   const handleStartAutoNavigation = useCallback(() => {
     if (waypoints.length === 0) {
-      Alert.alert('No Waypoints', 'Please add waypoints before starting navigation.');
+      Alert.alert(
+        'No Waypoints',
+        'Please add waypoints before starting navigation.',
+      );
       return;
     }
 
@@ -229,7 +237,10 @@ const NavigationMapScreen: React.FC = () => {
   // Start manual navigation
   const handleStartManualNavigation = useCallback(() => {
     if (waypoints.length === 0) {
-      Alert.alert('No Waypoints', 'Please add waypoints before starting navigation.');
+      Alert.alert(
+        'No Waypoints',
+        'Please add waypoints before starting navigation.',
+      );
       return;
     }
 
@@ -241,9 +252,15 @@ const NavigationMapScreen: React.FC = () => {
   const handleFocusRoute = useCallback(() => {
     if (navigationState.activeRoute) {
       focusOnRoute();
+      setIsFollowingUser(false);
       console.log('NavigationMapScreen - Focusing on route');
     }
   }, [navigationState.activeRoute, focusOnRoute]);
+
+  // Toggle user following
+  const handleToggleUserFollowing = useCallback(() => {
+    setIsFollowingUser(!isFollowingUser);
+  }, [isFollowingUser]);
 
   const getRouteColor = () => {
     if (navigationState.navigationMode === 'auto') return '#27AE60';
@@ -253,12 +270,7 @@ const NavigationMapScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.mapContainer,
-          { opacity: fadeAnim },
-        ]}
-      >
+      <Animated.View style={[styles.mapContainer, { opacity: fadeAnim }]}>
         <MapView
           ref={mapRef}
           style={styles.map}
@@ -276,6 +288,12 @@ const NavigationMapScreen: React.FC = () => {
           rotateEnabled={true}
           zoomEnabled={true}
           scrollEnabled={true}
+          onRegionChangeComplete={() => {
+            // When user manually moves map, stop auto-following
+            if (isFollowingUser) {
+              setIsFollowingUser(false);
+            }
+          }}
         >
           {/* Enhanced User location marker with FOV cone */}
           {location && (
@@ -393,9 +411,10 @@ const NavigationMapScreen: React.FC = () => {
             <Text style={styles.locationText}>
               📊 Accuracy: {location.accuracy.toFixed(0)}m | 🧭 Bearing:{' '}
               {(compassActive && compassHeading !== undefined
-                ? compassHeading 
-                : location.heading).toFixed(0)}°
-              {compassActive && ' (Compass)'}
+                ? compassHeading
+                : location.heading
+              ).toFixed(0)}
+              °{compassActive && ' (Compass)'}
             </Text>
           )}
 
@@ -446,13 +465,8 @@ const NavigationMapScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Compass Control Panel */}
-      <CompassControlPanel />
-      
-      {/* Debug Components - Temporary */}
-      <CombinedCompassDebugger />
-      <CompassTestComponent />
-      <SimpleCompassTest />
+      {/* Simple Compass Indicator */}
+      <SimpleCompassIndicator />
     </View>
   );
 };

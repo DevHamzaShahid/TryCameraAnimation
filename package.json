@@ -16,6 +16,7 @@
     "react-native": "0.80.2",
     "react-native-compass-heading": "^2.0.2",
     "react-native-maps": "^1.25.0",
+    "react-native-sensors": "^7.3.6",
     "react-native-svg": "^15.12.1"
   },
   "devDependencies": {

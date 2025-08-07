@@ -193,5 +193,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 100,
     borderTopRightRadius: 100,
     transformOrigin: 'center bottom',
+    top: 0,
+    left: 0,
   },
 });

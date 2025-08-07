@@ -33,13 +33,20 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
   const effectiveHeading = compassHeading !== undefined ? compassHeading : heading;
 
   useEffect(() => {
+    // Debug logging
+    console.log('EnhancedUserLocationMarker - Heading update:', {
+      gpsHeading: heading,
+      compassHeading: compassHeading,
+      effectiveHeading: effectiveHeading
+    });
+
     // Smooth rotation animation
     Animated.timing(rotationAnim, {
       toValue: effectiveHeading,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [effectiveHeading]);
+  }, [effectiveHeading, heading, compassHeading]);
 
   useEffect(() => {
     // Pulsing animation for navigation mode
@@ -99,16 +106,29 @@ export const EnhancedUserLocationMarker: React.FC<EnhancedUserLocationMarkerProp
       <View style={styles.markerContainer}>
         {/* Field of View Cone */}
         {showFOVCone && (
-          <View style={styles.fovContainer}>
+          <Animated.View 
+            style={[
+              styles.fovContainer,
+              {
+                transform: [
+                  { rotate: rotationAnim.interpolate({
+                      inputRange: [0, 360],
+                      outputRange: ['0deg', '360deg'],
+                    })
+                  },
+                ],
+              },
+            ]}
+          >
             <SimpleFieldOfViewCone
-              heading={effectiveHeading}
+              heading={0} // Static - rotation handled by parent
               isVisible={true}
               radius={80}
               angle={fovAngle}
               color={getMarkerColor()}
               opacity={0.25}
             />
-          </View>
+          </Animated.View>
         )}
 
         {/* Main marker with orientation */}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid, Platform, Alert } from 'react-native';
 import { calculateBearing } from '../utils/locationUtils';
-import { useCompassHeading } from './useCompassHeading';
+import { useSimpleCompass } from './useSimpleCompass';
 
 interface LocationState {
   latitude: number;
@@ -35,7 +35,16 @@ export const useLocationTracking = (): UseLocationTrackingReturn => {
     startCompass, 
     stopCompass,
     error: compassError 
-  } = useCompassHeading();
+  } = useSimpleCompass();
+
+  // Debug logging for compass state
+  useEffect(() => {
+    console.log('useLocationTracking - Compass state:', {
+      compassHeading,
+      compassActive,
+      compassError
+    });
+  }, [compassHeading, compassActive, compassError]);
 
   const requestLocationPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {

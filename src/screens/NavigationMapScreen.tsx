@@ -14,6 +14,8 @@ import {
   UserLocationMarker,
 } from '../components/WaypointMarkers';
 import { EnhancedUserLocationMarker } from '../components/EnhancedUserLocationMarker';
+import { CombinedCompassDebugger } from '../components/CombinedCompassDebugger';
+import { ManualRotationTest } from '../components/ManualRotationTest';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useNavigationCamera } from '../hooks/useNavigationCamera';
 import { useWaypointNavigation } from '../hooks/useWaypointNavigation';
@@ -65,6 +67,7 @@ const NavigationMapScreen: React.FC = () => {
   // State for UI
   const [showWaypointList, setShowWaypointList] = useState(false);
   const [compassBearing, setCompassBearing] = useState(0);
+  const [manualHeading, setManualHeading] = useState<number | null>(null);
 
   useEffect(() => {
     // Start location tracking and animate UI
@@ -101,6 +104,13 @@ const NavigationMapScreen: React.FC = () => {
       const effectiveHeading = location.compassHeading !== undefined 
         ? location.compassHeading 
         : location.heading;
+      
+      // Debug logging
+      console.log('NavigationMapScreen - Location update:', {
+        gpsHeading: location.heading,
+        compassHeading: location.compassHeading,
+        effectiveHeading: effectiveHeading
+      });
       
       if (effectiveHeading !== undefined) {
         setCompassBearing(effectiveHeading);
@@ -259,7 +269,7 @@ const NavigationMapScreen: React.FC = () => {
                 longitude: location.longitude,
               }}
               heading={location.heading}
-              compassHeading={location.compassHeading}
+              compassHeading={manualHeading !== null ? manualHeading : location.compassHeading}
               isNavigating={navigationState.isNavigating}
               showFOVCone={true}
               fovAngle={60}
@@ -419,6 +429,12 @@ const NavigationMapScreen: React.FC = () => {
           <Text style={styles.animationText}>📹 Adjusting camera...</Text>
         </View>
       )}
+
+      {/* Compass Debugger - Temporary */}
+      <CombinedCompassDebugger />
+
+      {/* Manual Rotation Test - Temporary */}
+      <ManualRotationTest onHeadingChange={setManualHeading} />
     </View>
   );
 };
